@@ -22,9 +22,6 @@ def borrow_book(
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
 
-    if book.available_copies <= 0:
-        raise HTTPException(status_code=400, detail="Book is not available")
-
     existing_transaction = db.query(models.BorrowTransaction).filter(
         models.BorrowTransaction.user_id == current_user.id,
         models.BorrowTransaction.isbn == borrow_data.isbn,
@@ -33,6 +30,9 @@ def borrow_book(
 
     if existing_transaction:
         raise HTTPException(status_code=400, detail="You already borrowed this book")
+
+    if book.available_copies <= 0:
+        raise HTTPException(status_code=400, detail="Book is not available. You can create a reservation.")
 
     borrow_date = datetime.utcnow()
     due_date = borrow_date + timedelta(days=borrow_data.days)
@@ -62,17 +62,22 @@ def return_book(
 ):
     transaction = db.query(models.BorrowTransaction).filter(
         models.BorrowTransaction.transaction_id == return_data.transaction_id,
-        models.BorrowTransaction.user_id == current_user.id,
-        models.BorrowTransaction.status == "borrowed"
+        models.BorrowTransaction.user_id == current_user.id
     ).first()
 
     if not transaction:
         raise HTTPException(status_code=404, detail="Active borrow transaction not found")
 
+    if transaction.status == "returned":
+        raise HTTPException(status_code=400, detail="This book has already been returned")
+
     book = db.query(models.Book).filter(models.Book.isbn == transaction.isbn).first()
 
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
+
+    if book.available_copies >= book.total_copies:
+        raise HTTPException(status_code=400, detail="Available copies cannot exceed total copies")
 
     transaction.return_date = datetime.utcnow()
     transaction.status = "returned"

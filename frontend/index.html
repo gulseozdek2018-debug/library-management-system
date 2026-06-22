@@ -618,6 +618,7 @@
                         Ara
                     </button>
                 </div>
+                <div id="searchFeedback" class="feedback" style="margin-top: 1rem; margin-bottom: 0.5rem;"></div>
                 <div id="booksResult" class="books-container">
                     <div style="text-align: center; color: var(--text-muted); padding: 1.5rem 0; font-size: 0.9rem;">
                         Arama yapmak için yukarıya bir kelime yazıp Ara butonuna tıklayın.
@@ -1025,6 +1026,7 @@
         }
 
         async function searchBooks() {
+            clearFeedback("searchFeedback");
             const search = document.getElementById("searchInput").value.trim();
             const container = document.getElementById("booksResult");
             
@@ -1077,7 +1079,7 @@
                                 ${isAvailable ? `Mevcut: ${book.available_copies} Kopya` : 'Tükendi'}
                             </span>
                             ${isAvailable 
-                                ? `<button class="btn-primary btn-sm" onclick="fillBorrow('${book.isbn}')">Seç ve Ödünç Al</button>`
+                                ? `<button class="btn-primary btn-sm" onclick="fillBorrow('${book.isbn}')">Ödünç Al</button>`
                                 : `<button class="btn-secondary btn-sm" onclick="reserveBook('${book.isbn}')">Rezervasyon Yap</button>`
                             }
                         </div>
@@ -1256,8 +1258,9 @@
         }
 
         async function reserveBook(isbn) {
+            clearFeedback("searchFeedback");
             if (!getToken()) {
-                alert("Kitap rezervasyonu yapabilmek için lütfen önce giriş yapın.");
+                showFeedback("searchFeedback", "Kitap rezervasyonu yapabilmek için lütfen önce giriş yapın.", "error");
                 return;
             }
 
@@ -1274,13 +1277,13 @@
                 const result = await res.json();
 
                 if (res.ok) {
-                    alert(`Rezervasyon Başarılı! Rezervasyon ID: ${result.reservation_id}`);
+                    showFeedback("searchFeedback", `Rezervasyon Başarılı! Rezervasyon ID: ${result.reservation_id}`, "success");
                     loadUserReservations();
                 } else {
-                    alert(result.detail || "Rezervasyon başarısız oldu.");
+                    showFeedback("searchFeedback", result.detail || "Rezervasyon başarısız oldu.", "error");
                 }
             } catch (err) {
-                alert("Sunucu bağlantı hatası oluştu.");
+                showFeedback("searchFeedback", "Sunucu bağlantı hatası oluştu.", "error");
             }
         }
 
@@ -1327,6 +1330,7 @@
         }
 
         async function cancelReservation(reservationId) {
+            clearFeedback("searchFeedback");
             if (!confirm("Rezervasyonunuzu iptal etmek istediğinize emin misiniz?")) return;
 
             try {
@@ -1338,14 +1342,14 @@
                 });
 
                 if (res.ok) {
-                    alert("Rezervasyon iptal edildi.");
+                    showFeedback("searchFeedback", "Rezervasyon başarıyla iptal edildi.", "success");
                     loadUserReservations();
                 } else {
                     const result = await res.json();
-                    alert(result.detail || "İptal işlemi başarısız.");
+                    showFeedback("searchFeedback", result.detail || "İptal işlemi başarısız.", "error");
                 }
             } catch (err) {
-                alert("Sunucu bağlantı hatası oluştu.");
+                showFeedback("searchFeedback", "Sunucu bağlantı hatası oluştu.", "error");
             }
         }
 

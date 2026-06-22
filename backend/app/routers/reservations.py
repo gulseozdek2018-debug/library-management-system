@@ -27,11 +27,11 @@ def create_reservation(
     existing_reservation = db.query(models.Reservation).filter(
         models.Reservation.user_id == current_user.id,
         models.Reservation.isbn == reservation_data.isbn,
-        models.Reservation.status == "active"
+        models.Reservation.status.in_(["active", "pending"])
     ).first()
 
     if existing_reservation:
-        raise HTTPException(status_code=400, detail="You already have an active reservation for this book")
+        raise HTTPException(status_code=400, detail="You already have an active or pending reservation for this book")
 
     reservation = models.Reservation(
         user_id=current_user.id,
@@ -67,7 +67,7 @@ def cancel_reservation(
     reservation = db.query(models.Reservation).filter(
         models.Reservation.reservation_id == reservation_id,
         models.Reservation.user_id == current_user.id,
-        models.Reservation.status == "active"
+        models.Reservation.status.in_(["active", "pending"])
     ).first()
 
     if not reservation:
