@@ -108,3 +108,15 @@ class ReservationResponse(BaseModel):
     status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class ReservationHistoryResponse(BaseModel):
+    reservation_id: int
+    user_id: int
+    isbn: str
+    title: str
+    author: str
+    reservation_date: datetime
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)

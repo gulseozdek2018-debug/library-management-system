@@ -25,7 +25,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         password_hash=get_password_hash(user.password),
-        role="student"
+        role=user.role
     )
 
     db.add(new_user)

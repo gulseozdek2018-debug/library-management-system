@@ -47,6 +47,13 @@ def borrow_book(
 
     book.available_copies -= 1
 
+    # Fulfill any active/pending reservations for this user and book
+    db.query(models.Reservation).filter(
+        models.Reservation.user_id == current_user.id,
+        models.Reservation.isbn == borrow_data.isbn,
+        models.Reservation.status.in_(["active", "pending"])
+    ).update({"status": "fulfilled"}, synchronize_session=False)
+
     db.add(transaction)
     db.commit()
     db.refresh(transaction)
@@ -84,6 +91,14 @@ def return_book(
     transaction.return_date = datetime.utcnow()
     transaction.status = "returned"
     book.available_copies += 1
+
+    # Mark the oldest active/pending reservation for this book as fulfilled
+    oldest_res = db.query(models.Reservation).filter(
+        models.Reservation.isbn == transaction.isbn,
+        models.Reservation.status.in_(["active", "pending"])
+    ).order_by(models.Reservation.reservation_date.asc()).first()
+    if oldest_res:
+        oldest_res.status = "fulfilled"
 
     db.commit()
     db.refresh(transaction)

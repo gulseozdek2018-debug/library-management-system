@@ -1353,17 +1353,40 @@
 
                     reservations.forEach(resv => {
                         const dateStr = new Date(resv.reservation_date).toLocaleDateString("tr-TR");
+                        
+                        let statusText = "";
+                        let statusClass = "";
+                        let showCancelButton = false;
+
+                        if (resv.status === "cancelled") {
+                            statusText = "İptal edildi";
+                            statusClass = "color: #64748b; background: #f1f5f9; padding: 2px 6px; border-radius: 4px; font-weight: 600;";
+                        } else if (resv.status === "fulfilled") {
+                            statusText = "Tamamlandı";
+                            statusClass = "color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600;";
+                        } else {
+                            statusText = "Aktif";
+                            statusClass = "color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px; font-weight: 600;";
+                            showCancelButton = true;
+                        }
+
                         const div = document.createElement("div");
-                        div.style.cssText = "display:flex; justify-content:space-between; align-items:center; border: 1px solid var(--border-color); padding:0.5rem 0.75rem; border-radius:var(--radius-sm); margin-bottom:0.5rem; font-size:0.85rem;";
+                        div.style.cssText = "border: 1px solid var(--border-color); padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);";
                         div.innerHTML = `
-                            <div>
-                                <strong>ISBN: ${resv.isbn}</strong><br>
-                                <span style="color:var(--text-muted)">Tarih: ${dateStr} - Durum: ${resv.status}</span>
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <div>
+                                    <strong style="font-size: 0.95rem; color: #0f172a;">${resv.title}</strong>
+                                    <div style="color: var(--text-muted); margin-top: 0.15rem;">Yazar: ${resv.author} | ISBN: ${resv.isbn}</div>
+                                </div>
+                                <span style="${statusClass}">${statusText}</span>
                             </div>
-                            ${resv.status === 'active' 
-                                ? `<button class="btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem" onclick="cancelReservation(${resv.reservation_id})">İptal</button>`
-                                : ''
-                            }
+                            <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px dashed var(--border-color); padding-top: 0.5rem; margin-top: 0.25rem;">
+                                <div style="color: #475569;"><strong>Tarih:</strong> ${dateStr}</div>
+                                ${showCancelButton 
+                                    ? `<button class="btn-danger btn-sm" style="padding: 4px 12px; font-size: 0.75rem; border-radius: 4px;" onclick="cancelReservation(${resv.reservation_id})">İptal Et</button>`
+                                    : ""
+                                }
+                            </div>
                         `;
                         container.appendChild(div);
                     });

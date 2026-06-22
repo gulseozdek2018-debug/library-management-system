@@ -46,16 +46,37 @@ def create_reservation(
     return reservation
 
 
-@router.get("/", response_model=List[schemas.ReservationResponse])
+@router.get("/", response_model=List[schemas.ReservationHistoryResponse])
 def get_my_reservations(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    reservations = db.query(models.Reservation).filter(
-        models.Reservation.user_id == current_user.id
-    ).all()
+    query = db.query(
+        models.Reservation,
+        models.Book.title,
+        models.Book.author
+    ).join(
+        models.Book,
+        models.Book.isbn == models.Reservation.isbn
+    )
+    if current_user.role not in ["admin", "librarian"]:
+        query = query.filter(models.Reservation.user_id == current_user.id)
 
-    return reservations
+    results = query.order_by(models.Reservation.reservation_date.desc()).all()
+
+    history = []
+    for resv, title, author in results:
+        history.append({
+            "reservation_id": resv.reservation_id,
+            "user_id": resv.user_id,
+            "isbn": resv.isbn,
+            "title": title,
+            "author": author,
+            "reservation_date": resv.reservation_date,
+            "status": resv.status
+        })
+
+    return history
 
 
 @router.delete("/{reservation_id}")
@@ -64,11 +85,14 @@ def cancel_reservation(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    reservation = db.query(models.Reservation).filter(
+    query = db.query(models.Reservation).filter(
         models.Reservation.reservation_id == reservation_id,
-        models.Reservation.user_id == current_user.id,
         models.Reservation.status.in_(["active", "pending"])
-    ).first()
+    )
+    if current_user.role not in ["admin", "librarian"]:
+        query = query.filter(models.Reservation.user_id == current_user.id)
+
+    reservation = query.first()
 
     if not reservation:
         raise HTTPException(status_code=404, detail="Active reservation not found")
