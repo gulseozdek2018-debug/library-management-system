@@ -810,12 +810,20 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
-                    <h2>Raporlar</h2>
+                    <h2>Sistem Raporları</h2>
                 </div>
-                <button class="btn-secondary" style="width: 100%;" onclick="getReports()">
-                    Sistem Raporlarını Yükle
-                </button>
-                <pre id="reportsResult">Henüz rapor alınmadı.</pre>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 1rem;">
+                    <button class="btn-secondary btn-sm" onclick="loadReport('overview')">Genel Özet</button>
+                    <button class="btn-secondary btn-sm" onclick="loadReport('most-borrowed')">En Çok Ödünç Alınanlar</button>
+                    <button class="btn-secondary btn-sm" onclick="loadReport('active-users')">Aktif Kullanıcılar</button>
+                    <button class="btn-secondary btn-sm" onclick="loadReport('borrowed-books')">Ödünç Alınmış Kitaplar</button>
+                    <button class="btn-secondary btn-sm" onclick="loadReport('overdue-books')">Gecikmiş Kitaplar</button>
+                    <button class="btn-secondary btn-sm" onclick="loadReport('monthly-stats')">Aylık İstatistikler</button>
+                </div>
+                <div id="reportsFeedback" class="feedback" style="margin-bottom: 0.5rem;"></div>
+                <div id="reportsResultContainer" style="margin-top: 1rem; border: 1px solid var(--border-color); padding: 0.75rem; border-radius: var(--radius-sm); background: #f8fafc; min-height: 100px; max-height: 400px; overflow-y: auto; font-size: 0.85rem;">
+                    <p style="color: var(--text-muted); text-align: center; margin-top: 1.5rem;">Bir rapor seçerek yükleyin.</p>
+                </div>
             </section>
         </div>
     </main>
@@ -1524,18 +1532,199 @@
             }
         }
 
-        async function getReports() {
+        async function loadReport(type) {
+            const container = document.getElementById("reportsResultContainer");
+            const feedbackEl = "reportsFeedback";
+            clearFeedback(feedbackEl);
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="display:inline-block; width: 1.5rem; height: 1.5rem; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Rapor yükleniyor...</p>
+                </div>
+            `;
+
+            let urlSuffix = "";
+            if (type === "overview") urlSuffix = "/";
+            else if (type === "most-borrowed") urlSuffix = "/most-borrowed-books";
+            else if (type === "active-users") urlSuffix = "/active-users";
+            else if (type === "borrowed-books") urlSuffix = "/borrowed-books";
+            else if (type === "overdue-books") urlSuffix = "/overdue-books";
+            else if (type === "monthly-stats") urlSuffix = "/monthly-borrow-stats";
+
             try {
-                const res = await fetch(`${API_URL}/reports/`, {
+                const res = await fetch(`${API_URL}/reports${urlSuffix}`, {
                     headers: {
                         ...authHeaders()
                     }
                 });
 
                 const result = await res.json();
-                document.getElementById("reportsResult").innerText = JSON.stringify(result, null, 2);
+
+                if (!res.ok) {
+                    showFeedback(feedbackEl, result.detail || "Rapor yüklenirken hata oluştu.", "error");
+                    container.innerHTML = `<p style="color:var(--danger); text-align:center; margin-top:1.5rem;">Hata: ${result.detail || 'Rapor alınamadı.'}</p>`;
+                    return;
+                }
+
+                if (type === "overview") {
+                    container.innerHTML = `
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem;">
+                            <div style="background:#fff; padding:0.75rem; border-radius:4px; border:1px solid #e2e8f0; text-align:center;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">TOPLAM KİTAP</div>
+                                <div style="font-size:1.5rem; font-weight:700; color:var(--primary); margin-top:0.25rem;">${result.total_books}</div>
+                            </div>
+                            <div style="background:#fff; padding:0.75rem; border-radius:4px; border:1px solid #e2e8f0; text-align:center;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">TOPLAM KULLANICI</div>
+                                <div style="font-size:1.5rem; font-weight:700; color:var(--success); margin-top:0.25rem;">${result.total_users}</div>
+                            </div>
+                            <div style="background:#fff; padding:0.75rem; border-radius:4px; border:1px solid #e2e8f0; text-align:center;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">ÖDÜNÇTEKİ KİTAPLAR</div>
+                                <div style="font-size:1.5rem; font-weight:700; color:#f59e0b; margin-top:0.25rem;">${result.currently_borrowed_books}</div>
+                            </div>
+                            <div style="background:#fff; padding:0.75rem; border-radius:4px; border:1px solid #e2e8f0; text-align:center;">
+                                <div style="font-size:0.75rem; color:var(--text-muted); font-weight:600;">AKTİF REZERVASYONLAR</div>
+                                <div style="font-size:1.5rem; font-weight:700; color:#3b82f6; margin-top:0.25rem;">${result.active_reservations}</div>
+                            </div>
+                        </div>
+                    `;
+                } else if (type === "most-borrowed") {
+                    if (result.length === 0) {
+                        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:1.5rem;">Kayıt bulunamadı.</p>`;
+                        return;
+                    }
+                    let rows = result.map((row, idx) => `
+                        <tr>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">${idx+1}</td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">${row.title}<br><span style="font-size:0.75rem; color:var(--text-muted)">Yazar: ${row.author}</span></td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">${row.isbn}</td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; color:var(--primary);">${row.borrow_count}</td>
+                        </tr>
+                    `).join("");
+                    container.innerHTML = `
+                        <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:4px; overflow:hidden;">
+                            <thead>
+                                <tr style="background:#f1f5f9; text-align:left; font-size:0.75rem;">
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:40px;">Sıra</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Kitap Adı / Yazar</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">ISBN</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:80px;">Ödünç</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                } else if (type === "active-users") {
+                    if (result.length === 0) {
+                        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:1.5rem;">Kayıt bulunamadı.</p>`;
+                        return;
+                    }
+                    let rows = result.map((row, idx) => `
+                        <tr>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">${idx+1}</td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; font-weight:600;">${row.username}</td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;"><span class="role-badge role-${row.role}" style="font-size:0.7rem; padding:2px 6px;">${row.role.toUpperCase()}</span></td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; color:var(--success);">${row.borrow_count}</td>
+                        </tr>
+                    `).join("");
+                    container.innerHTML = `
+                        <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:4px; overflow:hidden;">
+                            <thead>
+                                <tr style="background:#f1f5f9; text-align:left; font-size:0.75rem;">
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:40px;">Sıra</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Kullanıcı Adı</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:80px;">Rol</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:80px;">Ödünç</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                } else if (type === "borrowed-books") {
+                    if (result.length === 0) {
+                        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:1.5rem;">Şu an ödünçte kitap bulunmuyor.</p>`;
+                        return;
+                    }
+                    let rows = result.map(row => {
+                        const bDate = new Date(row.borrow_date).toLocaleDateString("tr-TR");
+                        const dDate = new Date(row.due_date).toLocaleDateString("tr-TR");
+                        return `
+                            <tr>
+                                <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; font-weight:600;">${row.title}<br><span style="font-size:0.75rem; color:var(--text-muted)">Yazar: ${row.author}</span></td>
+                                <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">${row.username}</td>
+                                <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">${bDate}</td>
+                                <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">${dDate}</td>
+                            </tr>
+                        `;
+                    }).join("");
+                    container.innerHTML = `
+                        <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:4px; overflow:hidden;">
+                            <thead>
+                                <tr style="background:#f1f5f9; text-align:left; font-size:0.75rem;">
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0;">Kitap / Yazar</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">Ödünç Alan</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:90px;">Ödünç T.</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; width:90px;">Son T.</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                } else if (type === "overdue-books") {
+                    if (result.length === 0) {
+                        container.innerHTML = `<p style="text-align:center; color:var(--success); font-weight:600; margin-top:1.5rem;">Süresi geçmiş ödünç kitap bulunmuyor.</p>`;
+                        return;
+                    }
+                    let rows = result.map(row => {
+                        const bDate = new Date(row.borrow_date).toLocaleDateString("tr-TR");
+                        const dDate = new Date(row.due_date).toLocaleDateString("tr-TR");
+                        return `
+                            <tr style="background:#fff5f5;">
+                                <td style="padding:0.5rem; border-bottom:1px solid #fecaca; font-weight:600; color:#991b1b;">${row.title}<br><span style="font-size:0.75rem; color:#c53030">Yazar: ${row.author}</span></td>
+                                <td style="padding:0.5rem; border-bottom:1px solid #fecaca; text-align:center; color:#991b1b;">${row.username}</td>
+                                <td style="padding:0.5rem; border-bottom:1px solid #fecaca; text-align:center; color:#991b1b;">${dDate}</td>
+                                <td style="padding:0.5rem; border-bottom:1px solid #fecaca; text-align:center; font-weight:700; color:#dc2626;">${row.days_overdue} Gün</td>
+                            </tr>
+                        `;
+                    }).join("");
+                    container.innerHTML = `
+                        <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:4px; overflow:hidden;">
+                            <thead>
+                                <tr style="background:#fee2e2; text-align:left; font-size:0.75rem; color:#991b1b;">
+                                    <th style="padding:0.5rem; border-bottom:1px solid #fecaca;">Kitap / Yazar</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #fecaca; text-align:center;">Ödünç Alan</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #fecaca; text-align:center; width:90px;">Son T.</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #fecaca; text-align:center; width:80px;">Gecikme</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                } else if (type === "monthly-stats") {
+                    if (result.length === 0) {
+                        container.innerHTML = `<p style="text-align:center; color:var(--text-muted); margin-top:1.5rem;">Kayıt bulunamadı.</p>`;
+                        return;
+                    }
+                    let rows = result.map(row => `
+                        <tr>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; font-weight:600; text-align:center;">${row.year} - ${String(row.month).padStart(2, '0')}</td>
+                            <td style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center; font-weight:700; color:var(--primary);">${row.borrow_count} İşlem</td>
+                        </tr>
+                    `).join("");
+                    container.innerHTML = `
+                        <table style="width:100%; border-collapse:collapse; background:#fff; border-radius:4px; overflow:hidden;">
+                            <thead>
+                                <tr style="background:#f1f5f9; text-align:left; font-size:0.75rem;">
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">Yıl - Ay</th>
+                                    <th style="padding:0.5rem; border-bottom:1px solid #e2e8f0; text-align:center;">Toplam Ödünç Alma</th>
+                                </tr>
+                            </thead>
+                            <tbody>${rows}</tbody>
+                        </table>
+                    `;
+                }
             } catch (err) {
-                document.getElementById("reportsResult").innerText = "Rapor alınamadı. Sunucu bağlantısını kontrol edin.";
+                console.error("Rapor hatası:", err);
+                container.innerHTML = `<p style="color:var(--danger); text-align:center; margin-top:1.5rem;">Sunucu bağlantı hatası oluştu.</p>`;
             }
         }
 

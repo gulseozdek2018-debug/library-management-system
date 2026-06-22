@@ -35,27 +35,31 @@ def get_reports_overview(
 
 @router.get("/most-borrowed-books")
 def most_borrowed_books(
+    limit: int = 10,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_roles("admin", "librarian"))
 ):
     results = db.query(
         models.BorrowTransaction.isbn,
         models.Book.title,
+        models.Book.author,
         func.count(models.BorrowTransaction.transaction_id).label("borrow_count")
     ).join(
         models.Book,
         models.Book.isbn == models.BorrowTransaction.isbn
     ).group_by(
         models.BorrowTransaction.isbn,
-        models.Book.title
+        models.Book.title,
+        models.Book.author
     ).order_by(
         func.count(models.BorrowTransaction.transaction_id).desc()
-    ).all()
+    ).limit(limit).all()
 
     return [
         {
             "isbn": row.isbn,
             "title": row.title,
+            "author": row.author,
             "borrow_count": row.borrow_count
         }
         for row in results
@@ -70,7 +74,6 @@ def active_users(
     results = db.query(
         models.User.id,
         models.User.username,
-        models.User.email,
         models.User.role,
         func.count(models.BorrowTransaction.transaction_id).label("borrow_count")
     ).join(
@@ -79,7 +82,6 @@ def active_users(
     ).group_by(
         models.User.id,
         models.User.username,
-        models.User.email,
         models.User.role
     ).order_by(
         func.count(models.BorrowTransaction.transaction_id).desc()
@@ -89,7 +91,6 @@ def active_users(
         {
             "user_id": row.id,
             "username": row.username,
-            "email": row.email,
             "role": row.role,
             "borrow_count": row.borrow_count
         }
@@ -102,20 +103,33 @@ def borrowed_books(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_roles("admin", "librarian"))
 ):
-    results = db.query(models.BorrowTransaction).filter(
+    results = db.query(
+        models.BorrowTransaction,
+        models.Book.title,
+        models.Book.author,
+        models.User.username
+    ).join(
+        models.Book,
+        models.Book.isbn == models.BorrowTransaction.isbn
+    ).join(
+        models.User,
+        models.User.id == models.BorrowTransaction.user_id
+    ).filter(
         models.BorrowTransaction.status == "borrowed"
     ).all()
 
     return [
         {
-            "transaction_id": item.transaction_id,
-            "user_id": item.user_id,
-            "isbn": item.isbn,
-            "borrow_date": item.borrow_date,
-            "due_date": item.due_date,
-            "status": item.status
+            "transaction_id": tx.transaction_id,
+            "isbn": tx.isbn,
+            "title": title,
+            "author": author,
+            "username": username,
+            "borrow_date": tx.borrow_date,
+            "due_date": tx.due_date,
+            "status": tx.status
         }
-        for item in results
+        for tx, title, author, username in results
     ]
 
 
@@ -126,21 +140,35 @@ def overdue_books(
 ):
     now = datetime.utcnow()
 
-    results = db.query(models.BorrowTransaction).filter(
+    results = db.query(
+        models.BorrowTransaction,
+        models.Book.title,
+        models.Book.author,
+        models.User.username
+    ).join(
+        models.Book,
+        models.Book.isbn == models.BorrowTransaction.isbn
+    ).join(
+        models.User,
+        models.User.id == models.BorrowTransaction.user_id
+    ).filter(
         models.BorrowTransaction.status == "borrowed",
         models.BorrowTransaction.due_date < now
     ).all()
 
     return [
         {
-            "transaction_id": item.transaction_id,
-            "user_id": item.user_id,
-            "isbn": item.isbn,
-            "borrow_date": item.borrow_date,
-            "due_date": item.due_date,
-            "status": item.status
+            "transaction_id": tx.transaction_id,
+            "isbn": tx.isbn,
+            "title": title,
+            "author": author,
+            "username": username,
+            "borrow_date": tx.borrow_date,
+            "due_date": tx.due_date,
+            "days_overdue": (now - tx.due_date).days,
+            "status": tx.status
         }
-        for item in results
+        for tx, title, author, username in results
     ]
 
 
@@ -167,7 +195,8 @@ def monthly_borrow_stats(
 
     return [
         {
-            "month": row.month,
+            "year": int(row.month.split("-")[0]) if row.month and "-" in row.month else 0,
+            "month": int(row.month.split("-")[1]) if row.month and "-" in row.month else 0,
             "borrow_count": row.borrow_count
         }
         for row in results
