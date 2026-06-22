@@ -57,3 +57,26 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     access_token: str
     token_type: str
+
+from datetime import datetime
+
+
+class BorrowCreate(BaseModel):
+    isbn: str
+    days: int = 14
+
+
+class ReturnBookRequest(BaseModel):
+    transaction_id: int
+
+
+class BorrowTransactionResponse(BaseModel):
+    transaction_id: int
+    user_id: int
+    isbn: str
+    borrow_date: datetime
+    due_date: datetime
+    return_date: Optional[datetime] = None
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
