@@ -80,3 +80,16 @@ class BorrowTransactionResponse(BaseModel):
     status: str
 
     model_config = ConfigDict(from_attributes=True)
+
+class ReservationCreate(BaseModel):
+    isbn: str
+
+
+class ReservationResponse(BaseModel):
+    reservation_id: int
+    user_id: int
+    isbn: str
+    reservation_date: datetime
+    status: str
+
+    model_config = ConfigDict(from_attributes=True)
