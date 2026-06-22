@@ -2,16 +2,345 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <title>Library Management System</title>
+    <title>Kütüphane Yönetim Sistemi</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f4f6;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background: #1f2937;
+            color: white;
+            padding: 20px;
+            text-align: center;
+        }
+
+        main {
+            max-width: 1100px;
+            margin: 25px auto;
+            padding: 20px;
+        }
+
+        section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        h2 {
+            margin-top: 0;
+            color: #111827;
+        }
+
+        input, select, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .danger {
+            background: #dc2626;
+        }
+
+        .danger:hover {
+            background: #b91c1c;
+        }
+
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+
+        .book-card {
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            background: #f9fafb;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 10px;
+        }
+
+        pre {
+            background: #111827;
+            color: #22c55e;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
 </head>
 <body>
-    <h1>Library Management System</h1>
-    <p>Frontend container çalışıyor.</p>
 
-    <h2>API Linkleri</h2>
-    <ul>
-        <li><a href="http://localhost:8000/docs" target="_blank">API Docs</a></li>
-        <li><a href="http://localhost:8000/health" target="_blank">Health Check</a></li>
-    </ul>
+<header>
+    <h1>Kütüphane Yönetim Sistemi</h1>
+    <p>FastAPI + PostgreSQL + Docker Frontend Paneli</p>
+</header>
+
+<main>
+
+    <section>
+        <h2>Kullanıcı Kaydı</h2>
+        <input id="regUsername" placeholder="Kullanıcı adı">
+        <input id="regEmail" placeholder="Email">
+        <input id="regPassword" placeholder="Şifre" type="password">
+        <select id="regRole">
+            <option value="member">member</option>
+            <option value="librarian">librarian</option>
+            <option value="admin">admin</option>
+        </select>
+        <button onclick="registerUser()">Kayıt Ol</button>
+        <p id="registerResult"></p>
+    </section>
+
+    <section>
+        <h2>Giriş Yap</h2>
+        <input id="loginUsername" placeholder="Kullanıcı adı">
+        <input id="loginPassword" placeholder="Şifre" type="password">
+        <button onclick="loginUser()">Giriş Yap</button>
+        <button class="danger" onclick="logout()">Çıkış Yap</button>
+        <p id="loginResult"></p>
+    </section>
+
+    <section>
+        <h2>Kitap Ara</h2>
+        <input id="searchInput" placeholder="Kitap adı, yazar veya ISBN ara">
+        <button onclick="searchBooks()">Ara</button>
+        <div id="booksResult"></div>
+    </section>
+
+    <section>
+        <h2>Kitap Ekle</h2>
+        <div class="grid">
+            <input id="bookIsbn" placeholder="ISBN">
+            <input id="bookTitle" placeholder="Kitap adı">
+            <input id="bookAuthor" placeholder="Yazar">
+            <input id="bookPublisher" placeholder="Yayıncı">
+            <input id="bookYear" placeholder="Yayın yılı" type="number">
+            <input id="bookTotal" placeholder="Toplam kopya" type="number" value="1">
+            <input id="bookAvailable" placeholder="Uygun kopya" type="number" value="1">
+        </div>
+        <button onclick="createBook()">Kitap Ekle</button>
+        <p id="createBookResult"></p>
+    </section>
+
+    <section>
+        <h2>Ödünç Alma</h2>
+        <input id="borrowIsbn" placeholder="ISBN">
+        <input id="borrowDays" placeholder="Gün" type="number" value="14">
+        <button onclick="borrowBook()">Ödünç Al</button>
+        <p id="borrowResult"></p>
+    </section>
+
+    <section>
+        <h2>İade Et</h2>
+        <input id="returnTransactionId" placeholder="Transaction ID" type="number">
+        <button onclick="returnBook()">İade Et</button>
+        <p id="returnResult"></p>
+    </section>
+
+    <section>
+        <h2>Raporlar</h2>
+        <button onclick="getReports()">Raporları Getir</button>
+        <pre id="reportsResult">Henüz rapor alınmadı.</pre>
+    </section>
+
+</main>
+
+<script>
+    const API_URL = "http://localhost:8000";
+
+    function getToken() {
+        return localStorage.getItem("token");
+    }
+
+    function authHeaders() {
+        const token = getToken();
+        return token ? { "Authorization": "Bearer " + token } : {};
+    }
+
+    async function registerUser() {
+        const data = {
+            username: document.getElementById("regUsername").value,
+            email: document.getElementById("regEmail").value,
+            password: document.getElementById("regPassword").value,
+            role: document.getElementById("regRole").value
+        };
+
+        const res = await fetch(`${API_URL}/auth/register`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        document.getElementById("registerResult").innerText = JSON.stringify(result, null, 2);
+    }
+
+    async function loginUser() {
+        const data = {
+            username: document.getElementById("loginUsername").value,
+            password: document.getElementById("loginPassword").value
+        };
+
+        const res = await fetch(`${API_URL}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+
+        if (result.access_token) {
+            localStorage.setItem("token", result.access_token);
+            document.getElementById("loginResult").innerHTML = "<span class='success'>Giriş başarılı. Token kaydedildi.</span>";
+        } else {
+            document.getElementById("loginResult").innerHTML = "<span class='error'>Giriş başarısız.</span>";
+        }
+    }
+
+    function logout() {
+        localStorage.removeItem("token");
+        document.getElementById("loginResult").innerHTML = "<span class='success'>Çıkış yapıldı.</span>";
+    }
+
+    async function searchBooks() {
+        const search = document.getElementById("searchInput").value;
+
+        const res = await fetch(`${API_URL}/books/?search=${encodeURIComponent(search)}`);
+        const books = await res.json();
+
+        const container = document.getElementById("booksResult");
+        container.innerHTML = "";
+
+        if (!Array.isArray(books) || books.length === 0) {
+            container.innerHTML = "<p>Kitap bulunamadı.</p>";
+            return;
+        }
+
+        books.slice(0, 20).forEach(book => {
+            const div = document.createElement("div");
+            div.className = "book-card";
+            div.innerHTML = `
+                <strong>${book.title}</strong><br>
+                ISBN: ${book.isbn}<br>
+                Yazar: ${book.author}<br>
+                Yayıncı: ${book.publisher || "-"}<br>
+                Yıl: ${book.publication_year || "-"}<br>
+                Uygun Kopya: ${book.available_copies}<br>
+                <button onclick="fillBorrow('${book.isbn}')">Bu Kitabı Ödünç Al</button>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function fillBorrow(isbn) {
+        document.getElementById("borrowIsbn").value = isbn;
+        window.scrollTo(0, document.body.scrollHeight);
+    }
+
+    async function createBook() {
+        const data = {
+            isbn: document.getElementById("bookIsbn").value,
+            title: document.getElementById("bookTitle").value,
+            author: document.getElementById("bookAuthor").value,
+            publisher: document.getElementById("bookPublisher").value,
+            publication_year: Number(document.getElementById("bookYear").value),
+            total_copies: Number(document.getElementById("bookTotal").value),
+            available_copies: Number(document.getElementById("bookAvailable").value)
+        };
+
+        const res = await fetch(`${API_URL}/books/`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...authHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        document.getElementById("createBookResult").innerText = JSON.stringify(result, null, 2);
+    }
+
+    async function borrowBook() {
+        const data = {
+            isbn: document.getElementById("borrowIsbn").value,
+            days: Number(document.getElementById("borrowDays").value)
+        };
+
+        const res = await fetch(`${API_URL}/borrow`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...authHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        document.getElementById("borrowResult").innerText = JSON.stringify(result, null, 2);
+
+        if (result.transaction_id) {
+            document.getElementById("returnTransactionId").value = result.transaction_id;
+        }
+    }
+
+    async function returnBook() {
+        const data = {
+            transaction_id: Number(document.getElementById("returnTransactionId").value)
+        };
+
+        const res = await fetch(`${API_URL}/return`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+                ...authHeaders()
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await res.json();
+        document.getElementById("returnResult").innerText = JSON.stringify(result, null, 2);
+    }
+
+    async function getReports() {
+        const res = await fetch(`${API_URL}/reports/`, {
+            headers: {
+                ...authHeaders()
+            }
+        });
+
+        const result = await res.json();
+        document.getElementById("reportsResult").innerText = JSON.stringify(result, null, 2);
+    }
+</script>
+
 </body>
 </html>
