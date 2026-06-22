@@ -1,0 +1,39 @@
+services:
+  database:
+    image: postgres:16
+    container_name: library_database
+    environment:
+      POSTGRES_DB: library_db
+      POSTGRES_USER: library_user
+      POSTGRES_PASSWORD: library_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U library_user -d library_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: library_backend
+    depends_on:
+      database:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://library_user:library_pass@database:5432/library_db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build: ./frontend
+    container_name: library_frontend
+    depends_on:
+      - backend
+    ports:
+      - "3000:80"
+
+volumes:
+  postgres_data:

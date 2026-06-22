@@ -149,13 +149,20 @@ def monthly_borrow_stats(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_roles("admin", "librarian"))
 ):
+    dialect = db.bind.dialect.name
+
+    if dialect == "postgresql":
+        month_expr = func.to_char(models.BorrowTransaction.borrow_date, "YYYY-MM")
+    else:
+        month_expr = func.strftime("%Y-%m", models.BorrowTransaction.borrow_date)
+
     results = db.query(
-        func.strftime("%Y-%m", models.BorrowTransaction.borrow_date).label("month"),
+        month_expr.label("month"),
         func.count(models.BorrowTransaction.transaction_id).label("borrow_count")
     ).group_by(
-        func.strftime("%Y-%m", models.BorrowTransaction.borrow_date)
+        month_expr
     ).order_by(
-        func.strftime("%Y-%m", models.BorrowTransaction.borrow_date)
+        month_expr
     ).all()
 
     return [
