@@ -2,7 +2,7 @@ from fastapi import FastAPI
 
 from .database import engine, Base
 from . import models
-from .routers import books, auth, borrow, reservations
+from .routers import books, auth, borrow, reservations, reports
 
 Base.metadata.create_all(bind=engine)
 
@@ -12,6 +12,7 @@ app.include_router(books.router)
 app.include_router(auth.router)
 app.include_router(borrow.router)
 app.include_router(reservations.router)
+app.include_router(reports.router)
 
 
 @app.get("/")
