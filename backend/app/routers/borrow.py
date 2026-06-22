@@ -60,10 +60,12 @@ def return_book(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    transaction = db.query(models.BorrowTransaction).filter(
-        models.BorrowTransaction.transaction_id == return_data.transaction_id,
-        models.BorrowTransaction.user_id == current_user.id
-    ).first()
+    query = db.query(models.BorrowTransaction).filter(
+        models.BorrowTransaction.transaction_id == return_data.transaction_id
+    )
+    if current_user.role not in ["admin", "librarian"]:
+        query = query.filter(models.BorrowTransaction.user_id == current_user.id)
+    transaction = query.first()
 
     if not transaction:
         raise HTTPException(status_code=404, detail="Active borrow transaction not found")
@@ -89,13 +91,38 @@ def return_book(
     return transaction
 
 
-@router.get("/borrow/history", response_model=List[schemas.BorrowTransactionResponse])
+@router.get("/borrow/history", response_model=List[schemas.BorrowHistoryResponse])
 def borrow_history(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    transactions = db.query(models.BorrowTransaction).filter(
+    results = db.query(
+        models.BorrowTransaction,
+        models.Book.title,
+        models.Book.author
+    ).join(
+        models.Book,
+        models.Book.isbn == models.BorrowTransaction.isbn
+    ).filter(
         models.BorrowTransaction.user_id == current_user.id
+    ).order_by(
+        models.BorrowTransaction.borrow_date.desc()
     ).all()
 
-    return transactions
+    history = []
+    now = datetime.utcnow()
+    for transaction, title, author in results:
+        is_overdue = transaction.status == "borrowed" and transaction.due_date < now
+        history.append({
+            "transaction_id": transaction.transaction_id,
+            "isbn": transaction.isbn,
+            "title": title,
+            "author": author,
+            "borrow_date": transaction.borrow_date,
+            "due_date": transaction.due_date,
+            "return_date": transaction.return_date,
+            "status": transaction.status,
+            "overdue": is_overdue
+        })
+
+    return history

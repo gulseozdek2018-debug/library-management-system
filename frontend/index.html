@@ -683,6 +683,19 @@
                     <p style="color:var(--text-muted); font-size:0.9rem;">Aktif rezervasyon bulunmuyor.</p>
                 </div>
             </section>
+
+            <!-- Ödünç Geçmişim Section -->
+            <section id="borrowHistorySection" style="display: none;">
+                <div class="section-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                    <h2>Ödünç Geçmişim</h2>
+                </div>
+                <div id="borrowHistoryList">
+                    <p style="color:var(--text-muted); font-size:0.9rem;">Ödünç alma geçmişi bulunmuyor.</p>
+                </div>
+            </section>
         </div>
 
         <!-- Right Column: User Panel & Administration -->
@@ -946,6 +959,7 @@
                         renderLoggedInState(user);
                         updateRoleVisibility(user.role);
                         loadUserReservations();
+                        loadBorrowHistory();
                     }
                 } else {
                     // Token expired or invalid
@@ -980,6 +994,7 @@
             widgetRoleBadge.className = `role-badge role-${user.role}`;
             
             document.getElementById("reservationsSection").style.display = "block";
+            document.getElementById("borrowHistorySection").style.display = "block";
         }
 
         function renderLoggedOutState() {
@@ -995,6 +1010,7 @@
             document.getElementById("loggedOutState").style.display = "block";
             document.getElementById("loggedInState").style.display = "none";
             document.getElementById("reservationsSection").style.display = "none";
+            document.getElementById("borrowHistorySection").style.display = "none";
             
             updateRoleVisibility("student");
         }
@@ -1231,8 +1247,9 @@
                         document.getElementById("returnTransactionId").value = result.transaction_id;
                     }
                     
-                    // Auto-refresh search
+                    // Auto-refresh search and history
                     searchBooks();
+                    loadBorrowHistory();
                 } else {
                     showFeedback("borrowResult", result.detail || "Ödünç alma işlemi başarısız.", "error");
                 }
@@ -1275,6 +1292,7 @@
                     showFeedback("returnResult", `İade Başarılı! Kitap rafa geri yerleştirildi.`, "success");
                     document.getElementById("returnTransactionId").value = "";
                     searchBooks();
+                    loadBorrowHistory();
                 } else {
                     showFeedback("returnResult", result.detail || "İade işlemi başarısız.", "error");
                 }
@@ -1376,6 +1394,110 @@
                 }
             } catch (err) {
                 showFeedback("searchFeedback", "Sunucu bağlantı hatası oluştu.", "error");
+            }
+        }
+
+        async function loadBorrowHistory() {
+            const container = document.getElementById("borrowHistoryList");
+            if (!getToken()) return;
+
+            try {
+                const res = await fetch(`${API_URL}/borrow/history`, {
+                    headers: {
+                        ...authHeaders()
+                    }
+                });
+
+                if (res.ok) {
+                    const history = await res.json();
+                    container.innerHTML = "";
+
+                    if (history.length === 0) {
+                        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Ödünç alma geçmişi bulunmuyor.</p>`;
+                        return;
+                    }
+
+                    history.forEach(tx => {
+                        const borrowDate = new Date(tx.borrow_date).toLocaleDateString("tr-TR");
+                        const dueDate = new Date(tx.due_date).toLocaleDateString("tr-TR");
+                        const returnDate = tx.return_date ? new Date(tx.return_date).toLocaleDateString("tr-TR") : "-";
+                        
+                        let statusText = "";
+                        let statusClass = "";
+                        let showReturnButton = false;
+
+                        if (tx.status === "returned") {
+                            statusText = "İade edildi";
+                            statusClass = "color: #10b981; background: #ecfdf5; padding: 2px 6px; border-radius: 4px; font-weight: 600;";
+                        } else if (tx.overdue) {
+                            statusText = "Gecikmiş";
+                            statusClass = "color: #ef4444; background: #fef2f2; padding: 2px 6px; border-radius: 4px; font-weight: 600;";
+                            showReturnButton = true;
+                        } else {
+                            statusText = "Ödünçte";
+                            statusClass = "color: #f59e0b; background: #fffbeb; padding: 2px 6px; border-radius: 4px; font-weight: 600;";
+                            showReturnButton = true;
+                        }
+
+                        const div = document.createElement("div");
+                        div.style.cssText = "border: 1px solid var(--border-color); padding: 0.85rem; border-radius: var(--radius-sm); margin-bottom: 0.75rem; font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,0.05);";
+                        
+                        div.innerHTML = `
+                            <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem;">
+                                <div>
+                                    <strong style="font-size: 0.95rem; color: #0f172a;">${tx.title}</strong>
+                                    <div style="color: var(--text-muted); margin-top: 0.15rem;">Yazar: ${tx.author} | ISBN: ${tx.isbn}</div>
+                                </div>
+                                <span style="${statusClass}">${statusText}</span>
+                            </div>
+                            <div style="display: flex; flex-wrap: wrap; gap: 1rem; color: #475569; border-top: 1px dashed var(--border-color); padding-top: 0.5rem; margin-top: 0.25rem;">
+                                <div><strong>Ödünç:</strong> ${borrowDate}</div>
+                                <div><strong>Teslim:</strong> ${dueDate}</div>
+                                <div><strong>İade:</strong> ${returnDate}</div>
+                            </div>
+                            ${showReturnButton 
+                                ? `<div style="display: flex; justify-content: flex-end; margin-top: 0.25rem;">
+                                    <button class="btn-success btn-sm" style="padding: 4px 12px; font-size: 0.75rem; border-radius: 4px;" onclick="returnBookFromHistory(${tx.transaction_id})">İade Et</button>
+                                   </div>`
+                                : ""
+                            }
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error("Ödünç geçmişi yüklenirken hata oluştu:", err);
+            }
+        }
+
+        async function returnBookFromHistory(transactionId) {
+            clearFeedback("returnResult");
+            clearFeedback("borrowResult");
+            try {
+                const res = await fetch(`${API_URL}/return`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify({ transaction_id: transactionId })
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    showFeedback("returnResult", `Kitap başarıyla iade edildi! (İşlem ID: ${transactionId})`, "success");
+                    await loadBorrowHistory();
+                    await loadUserReservations();
+                    if (document.getElementById("searchInput").value.trim()) {
+                        await searchBooks();
+                    }
+                } else {
+                    alert(result.detail || "İade işlemi başarısız.");
+                }
+            } catch (err) {
+                console.error("İade hatası:", err);
+                alert("Sunucu ile bağlantı kurulamadı.");
             }
         }
 

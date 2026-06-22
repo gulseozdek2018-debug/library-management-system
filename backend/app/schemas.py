@@ -81,6 +81,21 @@ class BorrowTransactionResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
+class BorrowHistoryResponse(BaseModel):
+    transaction_id: int
+    isbn: str
+    title: str
+    author: str
+    borrow_date: datetime
+    due_date: datetime
+    return_date: Optional[datetime] = None
+    status: str
+    overdue: bool
+
+    model_config = ConfigDict(from_attributes=True)
+
+
 class ReservationCreate(BaseModel):
     isbn: str
 
