@@ -2,345 +2,1379 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Kütüphane Yönetim Sistemi</title>
+    <!-- Google Fonts Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #f3f4f6;
+        :root {
+            --primary: #4f46e5;
+            --primary-hover: #4338ca;
+            --primary-light: #e0e7ff;
+            --success: #10b981;
+            --success-hover: #059669;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --warning: #f59e0b;
+            --background: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+            --header-bg: #0f172a;
+            --radius-lg: 12px;
+            --radius-md: 8px;
+            --radius-sm: 6px;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.08);
+            --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
             margin: 0;
             padding: 0;
         }
 
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.5;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Style */
         header {
-            background: #1f2937;
+            background-color: var(--header-bg);
             color: white;
-            padding: 20px;
-            text-align: center;
+            padding: 1.25rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
+        .header-logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-logo svg {
+            width: 2.25rem;
+            height: 2.25rem;
+            fill: currentColor;
+            color: #818cf8;
+        }
+
+        .header-title-container {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .header-title-container h1 {
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+        }
+
+        .header-title-container p {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 400;
+        }
+
+        /* User badge header */
+        .user-status-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background: rgba(255, 255, 255, 0.08);
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            font-size: 0.875rem;
+            transition: var(--transition);
+        }
+
+        .user-status-card.logged-in {
+            background: rgba(79, 70, 229, 0.15);
+            border-color: rgba(129, 140, 248, 0.3);
+        }
+
+        .user-avatar {
+            width: 1.75rem;
+            height: 1.75rem;
+            border-radius: 50%;
+            background: #818cf8;
+            color: var(--header-bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.8rem;
+        }
+
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.125rem 0.625rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .role-admin {
+            background-color: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fee2e2;
+        }
+
+        .role-librarian {
+            background-color: #faf5ff;
+            color: #7c3aed;
+            border: 1px solid #f3e8ff;
+        }
+
+        .role-member {
+            background-color: #eff6ff;
+            color: #2563eb;
+            border: 1px solid #dbeafe;
+        }
+
+        .role-guest {
+            background-color: #f8fafc;
+            color: #64748b;
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Main Container layout */
         main {
-            max-width: 1100px;
-            margin: 25px auto;
-            padding: 20px;
+            max-width: 1280px;
+            width: 100%;
+            margin: 2rem auto;
+            padding: 0 1.5rem;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            flex-grow: 1;
         }
 
+        @media (max-width: 1024px) {
+            main {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Section layout */
         section {
-            background: white;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            background-color: var(--card-bg);
+            border-radius: var(--radius-lg);
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            padding: 1.75rem;
+            margin-bottom: 2rem;
+            transition: var(--transition);
+        }
+
+        section:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1.25rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+        }
+
+        .section-header svg {
+            width: 1.5rem;
+            height: 1.5rem;
+            color: var(--primary);
         }
 
         h2 {
-            margin-top: 0;
-            color: #111827;
+            font-size: 1.25rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            color: #1e293b;
         }
 
-        input, select, button {
-            padding: 10px;
-            margin: 5px;
-            border-radius: 6px;
-            border: 1px solid #ccc;
+        /* Inputs & Form Controls */
+        .form-group {
+            margin-bottom: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.375rem;
         }
 
+        .form-group label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.625rem 0.875rem;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--border-color);
+            background-color: #f8fafc;
+            color: var(--text-main);
+            font-family: inherit;
+            font-size: 0.9rem;
+            outline: none;
+            transition: var(--transition);
+        }
+
+        input:focus, select:focus {
+            border-color: var(--primary);
+            background-color: #ffffff;
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.15);
+        }
+
+        /* Buttons */
         button {
-            background: #2563eb;
-            color: white;
-            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.625rem 1.25rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: var(--radius-md);
             border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            user-select: none;
         }
 
-        button:hover {
-            background: #1d4ed8;
+        .btn-primary {
+            background-color: var(--primary);
+            color: white;
         }
 
-        .danger {
-            background: #dc2626;
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
         }
 
-        .danger:hover {
-            background: #b91c1c;
+        .btn-secondary {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid #e2e8f0;
         }
 
-        .success {
-            color: green;
-            font-weight: bold;
+        .btn-secondary:hover {
+            background-color: #e2e8f0;
         }
 
-        .error {
-            color: red;
-            font-weight: bold;
+        .btn-danger {
+            background-color: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background-color: var(--danger-hover);
+        }
+
+        .btn-success {
+            background-color: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background-color: var(--success-hover);
+        }
+
+        .btn-sm {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8rem;
+            border-radius: var(--radius-sm);
+        }
+
+        /* Grid utilities */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .grid-2, .grid-3 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Auth Panel Tabs */
+        .auth-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .auth-tabs {
+            display: flex;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .auth-tab {
+            flex: 1;
+            text-align: center;
+            padding: 0.75rem;
+            font-weight: 600;
+            font-size: 0.95rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: var(--transition);
+        }
+
+        .auth-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .auth-form {
+            display: none;
+        }
+
+        .auth-form.active {
+            display: block;
+        }
+
+        /* Logged in state dashboard widget */
+        .logged-in-widget {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 1rem;
+            padding: 1rem 0;
+        }
+
+        .widget-avatar {
+            width: 4rem;
+            height: 4rem;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.75rem;
+            font-weight: 700;
+            box-shadow: 0 0 0 4px #f5f3ff;
+        }
+
+        .widget-username {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .widget-info {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Feedback display */
+        .feedback {
+            margin-top: 0.75rem;
+            padding: 0.75rem 1rem;
+            border-radius: var(--radius-md);
+            font-size: 0.85rem;
+            font-weight: 500;
+            display: none;
+            word-break: break-word;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        .feedback.active {
+            display: block;
+        }
+
+        .feedback-success {
+            background-color: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+
+        .feedback-error {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fca5a5;
+        }
+
+        .feedback-info {
+            background-color: #f0f9ff;
+            color: #075985;
+            border: 1px solid #bae6fd;
+        }
+
+        /* Book cards / search results */
+        .books-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
         }
 
         .book-card {
-            border: 1px solid #ddd;
-            padding: 12px;
-            border-radius: 8px;
-            margin: 10px 0;
-            background: #f9fafb;
+            border: 1px solid var(--border-color);
+            background-color: #ffffff;
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 1.5rem;
+            transition: var(--transition);
         }
 
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
-            gap: 10px;
+        .book-card:hover {
+            border-color: #cbd5e1;
+            box-shadow: var(--shadow);
+            transform: translateY(-1px);
         }
 
+        .book-main-info {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .book-icon-wrapper {
+            background-color: #f1f5f9;
+            padding: 0.625rem;
+            border-radius: var(--radius-md);
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .book-icon-wrapper svg {
+            width: 1.5rem;
+            height: 1.5rem;
+        }
+
+        .book-details {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .book-title {
+            font-size: 1.05rem;
+            font-weight: 700;
+            color: #1e293b;
+        }
+
+        .book-author {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #475569;
+        }
+
+        .book-meta {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 0.25rem;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+        }
+
+        .book-meta span {
+            background-color: #f1f5f9;
+            padding: 0.125rem 0.5rem;
+            border-radius: var(--radius-sm);
+        }
+
+        .book-actions {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 0.75rem;
+            min-width: 140px;
+        }
+
+        .copy-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 0.25rem 0.625rem;
+            border-radius: 9999px;
+        }
+
+        .copy-badge.available {
+            background-color: #d1fae5;
+            color: #065f46;
+        }
+
+        .copy-badge.unavailable {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        /* Reports viewer */
         pre {
-            background: #111827;
-            color: #22c55e;
-            padding: 15px;
-            border-radius: 8px;
+            background: #0f172a;
+            color: #38bdf8;
+            padding: 1.25rem;
+            border-radius: var(--radius-md);
             overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.85rem;
+            border: 1px solid #1e293b;
+            max-height: 400px;
+            margin-top: 1rem;
+        }
+
+        /* Dynamic visibility (Admin only) */
+        .admin-only {
+            display: none !important;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
         }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Kütüphane Yönetim Sistemi</h1>
-    <p>FastAPI + PostgreSQL + Docker Frontend Paneli</p>
-</header>
-
-<main>
-
-    <section>
-        <h2>Kullanıcı Kaydı</h2>
-        <input id="regUsername" placeholder="Kullanıcı adı">
-        <input id="regEmail" placeholder="Email">
-        <input id="regPassword" placeholder="Şifre" type="password">
-        <select id="regRole">
-            <option value="member">member</option>
-            <option value="librarian">librarian</option>
-            <option value="admin">admin</option>
-        </select>
-        <button onclick="registerUser()">Kayıt Ol</button>
-        <p id="registerResult"></p>
-    </section>
-
-    <section>
-        <h2>Giriş Yap</h2>
-        <input id="loginUsername" placeholder="Kullanıcı adı">
-        <input id="loginPassword" placeholder="Şifre" type="password">
-        <button onclick="loginUser()">Giriş Yap</button>
-        <button class="danger" onclick="logout()">Çıkış Yap</button>
-        <p id="loginResult"></p>
-    </section>
-
-    <section>
-        <h2>Kitap Ara</h2>
-        <input id="searchInput" placeholder="Kitap adı, yazar veya ISBN ara">
-        <button onclick="searchBooks()">Ara</button>
-        <div id="booksResult"></div>
-    </section>
-
-    <section>
-        <h2>Kitap Ekle</h2>
-        <div class="grid">
-            <input id="bookIsbn" placeholder="ISBN">
-            <input id="bookTitle" placeholder="Kitap adı">
-            <input id="bookAuthor" placeholder="Yazar">
-            <input id="bookPublisher" placeholder="Yayıncı">
-            <input id="bookYear" placeholder="Yayın yılı" type="number">
-            <input id="bookTotal" placeholder="Toplam kopya" type="number" value="1">
-            <input id="bookAvailable" placeholder="Uygun kopya" type="number" value="1">
+    <!-- Header Panel -->
+    <header>
+        <div class="header-logo">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                <path d="M12 11.55C9.64 9.35 6.48 8 3 8v11c3.48 0 6.64 1.35 9 3.55 2.36-2.2 5.52-3.55 9-3.55V8c-3.48 0-6.64 1.35-9 3.55zM12 2C9.5 2 7 3 5 5v1.5C6.5 5.5 8.25 5 10 5s3.5.5 5 1.5V5C13 3 10.5 2 12 2z"/>
+            </svg>
+            <div class="header-title-container">
+                <h1>Kütüphane Yönetim Sistemi</h1>
+                <p>FastAPI + PostgreSQL + Docker Modern Dashboard</p>
+            </div>
         </div>
-        <button onclick="createBook()">Kitap Ekle</button>
-        <p id="createBookResult"></p>
-    </section>
 
-    <section>
-        <h2>Ödünç Alma</h2>
-        <input id="borrowIsbn" placeholder="ISBN">
-        <input id="borrowDays" placeholder="Gün" type="number" value="14">
-        <button onclick="borrowBook()">Ödünç Al</button>
-        <p id="borrowResult"></p>
-    </section>
+        <div id="currentUserBadge" class="user-status-card">
+            <div class="user-avatar" id="badgeAvatar">G</div>
+            <span id="currentUserText">Yükleniyor...</span>
+            <span id="badgeRole" class="role-badge role-guest">Misafir</span>
+        </div>
+    </header>
 
-    <section>
-        <h2>İade Et</h2>
-        <input id="returnTransactionId" placeholder="Transaction ID" type="number">
-        <button onclick="returnBook()">İade Et</button>
-        <p id="returnResult"></p>
-    </section>
+    <!-- Main Workspace -->
+    <main>
+        <!-- Left Column: Search & Operational Actions -->
+        <div>
+            <!-- Book Search Section -->
+            <section>
+                <div class="section-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <h2>Kitap Arama</h2>
+                </div>
+                <div class="input-row">
+                    <input id="searchInput" placeholder="Kitap adı, yazar veya ISBN ara..." onkeypress="handleSearchKeyPress(event)">
+                    <button class="btn-primary" onclick="searchBooks()">
+                        <svg xmlns="http://www.w3.org/2000/svg" style="width:1.2rem;height:1.2rem" fill="none" viewBox="0 0 24 24" stroke-width="2.5" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        Ara
+                    </button>
+                </div>
+                <div id="booksResult" class="books-container">
+                    <div style="text-align: center; color: var(--text-muted); padding: 1.5rem 0; font-size: 0.9rem;">
+                        Arama yapmak için yukarıya bir kelime yazıp Ara butonuna tıklayın.
+                    </div>
+                </div>
+            </section>
 
-    <section>
-        <h2>Raporlar</h2>
-        <button onclick="getReports()">Raporları Getir</button>
-        <pre id="reportsResult">Henüz rapor alınmadı.</pre>
-    </section>
+            <!-- Book Borrow & Return Actions Section -->
+            <section>
+                <div class="section-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                    </svg>
+                    <h2>Ödünç Alma & İade Etme</h2>
+                </div>
 
-</main>
+                <div class="grid-2">
+                    <!-- Borrow form -->
+                    <div style="border-right: 1px solid var(--border-color); padding-right: 1rem;">
+                        <h3 style="font-size:1rem; font-weight:600; margin-bottom:1rem; color:#1e293b;">Kitap Ödünç Al</h3>
+                        <div class="form-group">
+                            <label for="borrowIsbn">ISBN Numarası</label>
+                            <input id="borrowIsbn" placeholder="Kitabın ISBN değerini girin">
+                        </div>
+                        <div class="form-group">
+                            <label for="borrowDays">Ödünç Alma Süresi (Gün)</label>
+                            <input id="borrowDays" type="number" value="14" min="1" max="90">
+                        </div>
+                        <button class="btn-primary" style="width:100%" onclick="borrowBook()">
+                            Kitabı Ödünç Al
+                        </button>
+                        <div id="borrowResult" class="feedback"></div>
+                    </div>
 
-<script>
-    const API_URL = "http://localhost:8000";
+                    <!-- Return form -->
+                    <div style="padding-left: 1rem;">
+                        <h3 style="font-size:1rem; font-weight:600; margin-bottom:1rem; color:#1e293b;">Kitap İade Et</h3>
+                        <div class="form-group">
+                            <label for="returnTransactionId">İşlem (Transaction) ID</label>
+                            <input id="returnTransactionId" type="number" placeholder="İade edeceğiniz işlem ID'sini girin">
+                        </div>
+                        <div style="height: 52px; display: flex; align-items: flex-end; margin-bottom: 1rem;">
+                            <!-- Placeholder spacer to align return button with borrow button -->
+                        </div>
+                        <button class="btn-danger" style="width:100%" onclick="returnBook()">
+                            Kitabı İade Et
+                        </button>
+                        <div id="returnResult" class="feedback"></div>
+                    </div>
+                </div>
+            </section>
 
-    function getToken() {
-        return localStorage.getItem("token");
-    }
+            <!-- Reservations Section (Optional / Premium feature addition) -->
+            <section id="reservationsSection" style="display: none;">
+                <div class="section-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <h2>Rezervasyonlarım</h2>
+                </div>
+                <div id="reservationsList">
+                    <p style="color:var(--text-muted); font-size:0.9rem;">Aktif rezervasyon bulunmuyor.</p>
+                </div>
+            </section>
+        </div>
 
-    function authHeaders() {
-        const token = getToken();
-        return token ? { "Authorization": "Bearer " + token } : {};
-    }
+        <!-- Right Column: User Panel & Administration -->
+        <div>
+            <!-- Authentication Section -->
+            <section id="authSection">
+                <div class="auth-container">
+                    <div id="loggedOutState">
+                        <div class="auth-tabs">
+                            <div id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Giriş Yap</div>
+                            <div id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Kayıt Ol</div>
+                        </div>
 
-    async function registerUser() {
-        const data = {
-            username: document.getElementById("regUsername").value,
-            email: document.getElementById("regEmail").value,
-            password: document.getElementById("regPassword").value,
-            role: document.getElementById("regRole").value
-        };
+                        <!-- Login Form -->
+                        <div id="loginForm" class="auth-form active">
+                            <div class="form-group">
+                                <label for="loginUsername">Kullanıcı Adı</label>
+                                <input id="loginUsername" placeholder="Kullanıcı adınızı girin">
+                            </div>
+                            <div class="form-group">
+                                <label for="loginPassword">Şifre</label>
+                                <input id="loginPassword" type="password" placeholder="Şifrenizi girin">
+                            </div>
+                            <button class="btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="loginUser()">Giriş Yap</button>
+                            <div id="loginResult" class="feedback"></div>
+                        </div>
 
-        const res = await fetch(`${API_URL}/auth/register`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
+                        <!-- Register Form -->
+                        <div id="registerForm" class="auth-form">
+                            <div class="form-group">
+                                <label for="regUsername">Kullanıcı Adı</label>
+                                <input id="regUsername" placeholder="Kullanıcı adı oluşturun">
+                            </div>
+                            <div class="form-group">
+                                <label for="regEmail">E-posta Adresi</label>
+                                <input id="regEmail" type="email" placeholder="E-posta adresinizi girin">
+                            </div>
+                            <div class="form-group">
+                                <label for="regPassword">Şifre</label>
+                                <input id="regPassword" type="password" placeholder="Güçlü bir şifre oluşturun">
+                            </div>
+                            <button class="btn-success" style="width: 100%; margin-top: 0.5rem;" onclick="registerUser()">Kayıt Ol</button>
+                            <div id="registerResult" class="feedback"></div>
+                        </div>
+                    </div>
 
-        const result = await res.json();
-        document.getElementById("registerResult").innerText = JSON.stringify(result, null, 2);
-    }
+                    <div id="loggedInState" style="display: none;">
+                        <div class="logged-in-widget">
+                            <div class="widget-avatar" id="widgetAvatar">U</div>
+                            <div class="widget-info">
+                                <div class="widget-username" id="widgetUsername">Kullanıcı</div>
+                                <span id="widgetRoleBadge" class="role-badge role-member">Member</span>
+                            </div>
+                            <button class="btn-danger btn-sm" style="width: 100%; margin-top: 1rem;" onclick="logout()">
+                                <svg xmlns="http://www.w3.org/2000/svg" style="width:1rem;height:1rem" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                                </svg>
+                                Güvenli Çıkış Yap
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
 
-    async function loginUser() {
-        const data = {
-            username: document.getElementById("loginUsername").value,
-            password: document.getElementById("loginPassword").value
-        };
+            <!-- Book Creation Section (Admin/Librarian only) -->
+            <section class="admin-only" id="createBookSection">
+                <div class="section-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    <h2>Kitap Ekle</h2>
+                </div>
+                <div style="display:flex; flex-direction:column; gap: 0.75rem;">
+                    <div class="form-group">
+                        <label for="bookIsbn">ISBN</label>
+                        <input id="bookIsbn" placeholder="ISBN Numarası">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookTitle">Kitap Adı</label>
+                        <input id="bookTitle" placeholder="Kitap Adı">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookAuthor">Yazar</label>
+                        <input id="bookAuthor" placeholder="Yazar Adı">
+                    </div>
+                    <div class="form-group">
+                        <label for="bookPublisher">Yayıncı</label>
+                        <input id="bookPublisher" placeholder="Yayınevi">
+                    </div>
+                    <div class="grid-2">
+                        <div class="form-group">
+                            <label for="bookYear">Yayın Yılı</label>
+                            <input id="bookYear" type="number" placeholder="Örn: 2023">
+                        </div>
+                        <div class="form-group">
+                            <label for="bookTotal">Toplam Kopya</label>
+                            <input id="bookTotal" type="number" value="1">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="bookAvailable">Kullanılabilir Kopya</label>
+                        <input id="bookAvailable" type="number" value="1">
+                    </div>
+                    <button class="btn-primary" style="margin-top: 0.5rem;" onclick="createBook()">Kitap Ekle</button>
+                    <div id="createBookResult" class="feedback"></div>
+                </div>
+            </section>
 
-        const res = await fetch(`${API_URL}/auth/login`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(data)
-        });
+            <!-- Reports Section (Admin/Librarian only) -->
+            <section class="admin-only" id="reportsSection">
+                <div class="section-header">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2m0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                    </svg>
+                    <h2>Raporlar</h2>
+                </div>
+                <button class="btn-secondary" style="width: 100%;" onclick="getReports()">
+                    Sistem Raporlarını Yükle
+                </button>
+                <pre id="reportsResult">Henüz rapor alınmadı.</pre>
+            </section>
+        </div>
+    </main>
 
-        const result = await res.json();
+    <script>
+        const API_URL = window.location.origin === "http://localhost:3000" ? "http://localhost:8000" : window.location.origin.replace(":3000", ":8000");
 
-        if (result.access_token) {
-            localStorage.setItem("token", result.access_token);
-            document.getElementById("loginResult").innerHTML = "<span class='success'>Giriş başarılı. Token kaydedildi.</span>";
-        } else {
-            document.getElementById("loginResult").innerHTML = "<span class='error'>Giriş başarısız.</span>";
+        function getToken() {
+            return localStorage.getItem("token");
         }
-    }
 
-    function logout() {
-        localStorage.removeItem("token");
-        document.getElementById("loginResult").innerHTML = "<span class='success'>Çıkış yapıldı.</span>";
-    }
-
-    async function searchBooks() {
-        const search = document.getElementById("searchInput").value;
-
-        const res = await fetch(`${API_URL}/books/?search=${encodeURIComponent(search)}`);
-        const books = await res.json();
-
-        const container = document.getElementById("booksResult");
-        container.innerHTML = "";
-
-        if (!Array.isArray(books) || books.length === 0) {
-            container.innerHTML = "<p>Kitap bulunamadı.</p>";
-            return;
+        function authHeaders() {
+            const token = getToken();
+            return token ? { "Authorization": "Bearer " + token } : {};
         }
 
-        books.slice(0, 20).forEach(book => {
-            const div = document.createElement("div");
-            div.className = "book-card";
-            div.innerHTML = `
-                <strong>${book.title}</strong><br>
-                ISBN: ${book.isbn}<br>
-                Yazar: ${book.author}<br>
-                Yayıncı: ${book.publisher || "-"}<br>
-                Yıl: ${book.publication_year || "-"}<br>
-                Uygun Kopya: ${book.available_copies}<br>
-                <button onclick="fillBorrow('${book.isbn}')">Bu Kitabı Ödünç Al</button>
-            `;
-            container.appendChild(div);
-        });
-    }
-
-    function fillBorrow(isbn) {
-        document.getElementById("borrowIsbn").value = isbn;
-        window.scrollTo(0, document.body.scrollHeight);
-    }
-
-    async function createBook() {
-        const data = {
-            isbn: document.getElementById("bookIsbn").value,
-            title: document.getElementById("bookTitle").value,
-            author: document.getElementById("bookAuthor").value,
-            publisher: document.getElementById("bookPublisher").value,
-            publication_year: Number(document.getElementById("bookYear").value),
-            total_copies: Number(document.getElementById("bookTotal").value),
-            available_copies: Number(document.getElementById("bookAvailable").value)
-        };
-
-        const res = await fetch(`${API_URL}/books/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...authHeaders()
-            },
-            body: JSON.stringify(data)
-        });
-
-        const result = await res.json();
-        document.getElementById("createBookResult").innerText = JSON.stringify(result, null, 2);
-    }
-
-    async function borrowBook() {
-        const data = {
-            isbn: document.getElementById("borrowIsbn").value,
-            days: Number(document.getElementById("borrowDays").value)
-        };
-
-        const res = await fetch(`${API_URL}/borrow`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...authHeaders()
-            },
-            body: JSON.stringify(data)
-        });
-
-        const result = await res.json();
-        document.getElementById("borrowResult").innerText = JSON.stringify(result, null, 2);
-
-        if (result.transaction_id) {
-            document.getElementById("returnTransactionId").value = result.transaction_id;
+        // Display feedback helpers
+        function showFeedback(elementId, text, type = 'info') {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.innerText = text;
+            el.className = `feedback active feedback-${type}`;
         }
-    }
 
-    async function returnBook() {
-        const data = {
-            transaction_id: Number(document.getElementById("returnTransactionId").value)
-        };
+        function clearFeedback(elementId) {
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.className = 'feedback';
+            el.innerText = '';
+        }
 
-        const res = await fetch(`${API_URL}/return`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                ...authHeaders()
-            },
-            body: JSON.stringify(data)
-        });
+        // Tab selection helper for Login/Register
+        function switchAuthTab(tab) {
+            document.getElementById('tabLogin').className = tab === 'login' ? 'auth-tab active' : 'auth-tab';
+            document.getElementById('tabRegister').className = tab === 'register' ? 'auth-tab active' : 'auth-tab';
+            document.getElementById('loginForm').className = tab === 'login' ? 'auth-form active' : 'auth-form';
+            document.getElementById('registerForm').className = tab === 'register' ? 'auth-form active' : 'auth-form';
+            clearFeedback('loginResult');
+            clearFeedback('registerResult');
+        }
 
-        const result = await res.json();
-        document.getElementById("returnResult").innerText = JSON.stringify(result, null, 2);
-    }
-
-    async function getReports() {
-        const res = await fetch(`${API_URL}/reports/`, {
-            headers: {
-                ...authHeaders()
+        // Form submission on Enter key
+        function handleSearchKeyPress(event) {
+            if (event.key === 'Enter') {
+                searchBooks();
             }
-        });
+        }
 
-        const result = await res.json();
-        document.getElementById("reportsResult").innerText = JSON.stringify(result, null, 2);
-    }
-</script>
+        async function registerUser() {
+            clearFeedback("registerResult");
+            const username = document.getElementById("regUsername").value.trim();
+            const email = document.getElementById("regEmail").value.trim();
+            const password = document.getElementById("regPassword").value.trim();
 
+            if (!username || !email || !password) {
+                showFeedback("registerResult", "Lütfen tüm alanları doldurun.", "error");
+                return;
+            }
+
+            const data = { username, email, password };
+
+            try {
+                const res = await fetch(`${API_URL}/auth/register`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    showFeedback("registerResult", "Kayıt başarılı! Şimdi Giriş Yap tabından sisteme bağlanabilirsiniz.", "success");
+                    // Reset input values
+                    document.getElementById("regUsername").value = "";
+                    document.getElementById("regEmail").value = "";
+                    document.getElementById("regPassword").value = "";
+                    setTimeout(() => switchAuthTab('login'), 2000);
+                } else {
+                    showFeedback("registerResult", result.detail || "Kayıt sırasında bir hata oluştu.", "error");
+                }
+            } catch (err) {
+                showFeedback("registerResult", "Sunucuya bağlanılamadı. API çalışıyor mu?", "error");
+            }
+        }
+
+        async function loginUser() {
+            clearFeedback("loginResult");
+            const username = document.getElementById("loginUsername").value.trim();
+            const password = document.getElementById("loginPassword").value.trim();
+
+            if (!username || !password) {
+                showFeedback("loginResult", "Lütfen kullanıcı adı ve şifrenizi girin.", "error");
+                return;
+            }
+
+            const data = { username, password };
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok && result.access_token) {
+                    localStorage.setItem("token", result.access_token);
+                    showFeedback("loginResult", "Giriş başarılı! Yönlendiriliyorsunuz...", "success");
+                    
+                    document.getElementById("loginUsername").value = "";
+                    document.getElementById("loginPassword").value = "";
+                    
+                    await loadCurrentUser();
+                } else {
+                    showFeedback("loginResult", result.detail || "Giriş başarısız. Bilgilerinizi kontrol edin.", "error");
+                }
+            } catch (err) {
+                showFeedback("loginResult", "Sunucuya bağlanılamadı. API çalışıyor mu?", "error");
+            }
+        }
+
+        async function loadCurrentUser() {
+            const token = getToken();
+            if (!token) {
+                renderLoggedOutState();
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/auth/me`, {
+                    headers: {
+                        ...authHeaders()
+                    }
+                });
+
+                if (res.ok) {
+                    const user = await res.json();
+                    if (user.username) {
+                        localStorage.setItem("role", user.role);
+                        renderLoggedInState(user);
+                        updateRoleVisibility(user.role);
+                        loadUserReservations();
+                    }
+                } else {
+                    // Token expired or invalid
+                    logout();
+                }
+            } catch (err) {
+                console.error("Kullanıcı bilgisi alınamadı:", err);
+                renderLoggedOutState();
+            }
+        }
+
+        function renderLoggedInState(user) {
+            // Header badge updates
+            document.getElementById("currentUserBadge").className = "user-status-card logged-in";
+            document.getElementById("currentUserText").innerHTML = `<strong>${user.username}</strong>`;
+            
+            const badgeRole = document.getElementById("badgeRole");
+            badgeRole.innerText = user.role;
+            badgeRole.className = `role-badge role-${user.role}`;
+
+            const avatarChar = user.username.charAt(0).toUpperCase();
+            document.getElementById("badgeAvatar").innerText = avatarChar;
+
+            // Widget panels update
+            document.getElementById("loggedOutState").style.display = "none";
+            document.getElementById("loggedInState").style.display = "block";
+            document.getElementById("widgetAvatar").innerText = avatarChar;
+            document.getElementById("widgetUsername").innerText = user.username;
+            
+            const widgetRoleBadge = document.getElementById("widgetRoleBadge");
+            widgetRoleBadge.innerText = user.role.toUpperCase();
+            widgetRoleBadge.className = `role-badge role-${user.role}`;
+            
+            document.getElementById("reservationsSection").style.display = "block";
+        }
+
+        function renderLoggedOutState() {
+            document.getElementById("currentUserBadge").className = "user-status-card";
+            document.getElementById("currentUserText").innerHTML = "Ziyaretçi Modu";
+            
+            const badgeRole = document.getElementById("badgeRole");
+            badgeRole.innerText = "MİSAFİR";
+            badgeRole.className = "role-badge role-guest";
+            
+            document.getElementById("badgeAvatar").innerText = "?";
+
+            document.getElementById("loggedOutState").style.display = "block";
+            document.getElementById("loggedInState").style.display = "none";
+            document.getElementById("reservationsSection").style.display = "none";
+            
+            updateRoleVisibility("member");
+        }
+
+        function updateRoleVisibility(role) {
+            const adminSections = document.querySelectorAll(".admin-only");
+            const isStaff = (role === "admin" || role === "librarian");
+
+            adminSections.forEach(section => {
+                if (isStaff) {
+                    section.style.setProperty("display", "block", "important");
+                } else {
+                    section.style.setProperty("display", "none", "important");
+                }
+            });
+        }
+
+        function logout() {
+            localStorage.removeItem("token");
+            localStorage.removeItem("role");
+            
+            clearFeedback('loginResult');
+            clearFeedback('registerResult');
+            clearFeedback('borrowResult');
+            clearFeedback('returnResult');
+            clearFeedback('createBookResult');
+            
+            renderLoggedOutState();
+        }
+
+        async function searchBooks() {
+            const search = document.getElementById("searchInput").value.trim();
+            const container = document.getElementById("booksResult");
+            
+            container.innerHTML = `
+                <div style="text-align: center; padding: 2rem 0;">
+                    <div style="display:inline-block; width: 1.5rem; height: 1.5rem; border: 2px solid #cbd5e1; border-top-color: var(--primary); border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+                    <p style="margin-top: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">Kitaplar aranıyor...</p>
+                </div>
+            `;
+
+            try {
+                const res = await fetch(`${API_URL}/books/?search=${encodeURIComponent(search)}`);
+                const books = await res.json();
+
+                container.innerHTML = "";
+
+                if (!Array.isArray(books) || books.length === 0) {
+                    container.innerHTML = `
+                        <div style="text-align: center; color: var(--danger); padding: 1.5rem 0; font-size: 0.9rem; font-weight: 500;">
+                            Arama kriterine uygun kitap bulunamadı.
+                        </div>
+                    `;
+                    return;
+                }
+
+                books.slice(0, 20).forEach(book => {
+                    const isAvailable = book.available_copies > 0;
+                    const div = document.createElement("div");
+                    div.className = "book-card";
+                    
+                    div.innerHTML = `
+                        <div class="book-main-info">
+                            <div class="book-icon-wrapper">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                                </svg>
+                            </div>
+                            <div class="book-details">
+                                <span class="book-title">${book.title}</span>
+                                <span class="book-author">${book.author}</span>
+                                <div class="book-meta">
+                                    <span>ISBN: ${book.isbn}</span>
+                                    <span>Yayınevi: ${book.publisher || "-"}</span>
+                                    <span>Yıl: ${book.publication_year || "-"}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="book-actions">
+                            <span class="copy-badge ${isAvailable ? 'available' : 'unavailable'}">
+                                ${isAvailable ? `Mevcut: ${book.available_copies} Kopya` : 'Tükendi'}
+                            </span>
+                            ${isAvailable 
+                                ? `<button class="btn-primary btn-sm" onclick="fillBorrow('${book.isbn}')">Seç ve Ödünç Al</button>`
+                                : `<button class="btn-secondary btn-sm" onclick="reserveBook('${book.isbn}')">Rezervasyon Yap</button>`
+                            }
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (err) {
+                container.innerHTML = `
+                    <div style="text-align: center; color: var(--danger); padding: 1.5rem 0; font-size: 0.9rem;">
+                        Sunucu ile bağlantı kurulamadı. API çalışır durumda mı?
+                    </div>
+                `;
+            }
+        }
+
+        function fillBorrow(isbn) {
+            document.getElementById("borrowIsbn").value = isbn;
+            document.getElementById("borrowIsbn").focus();
+            
+            // Highlight target section visual clue
+            const section = document.getElementById("borrowIsbn").closest('section');
+            section.style.boxShadow = "0 0 0 3px rgba(79, 70, 229, 0.3)";
+            setTimeout(() => {
+                section.style.boxShadow = "";
+            }, 800);
+        }
+
+        async function createBook() {
+            clearFeedback("createBookResult");
+            
+            const isbn = document.getElementById("bookIsbn").value.trim();
+            const title = document.getElementById("bookTitle").value.trim();
+            const author = document.getElementById("bookAuthor").value.trim();
+            const publisher = document.getElementById("bookPublisher").value.trim();
+            const yearVal = document.getElementById("bookYear").value;
+            const totalVal = document.getElementById("bookTotal").value;
+            const availableVal = document.getElementById("bookAvailable").value;
+
+            if (!isbn || !title || !author) {
+                showFeedback("createBookResult", "ISBN, Kitap Adı ve Yazar alanları zorunludur.", "error");
+                return;
+            }
+
+            const data = {
+                isbn: isbn,
+                title: title,
+                author: author,
+                publisher: publisher || null,
+                publication_year: yearVal ? Number(yearVal) : null,
+                total_copies: totalVal ? Number(totalVal) : 1,
+                available_copies: availableVal ? Number(availableVal) : 1
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/books/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    showFeedback("createBookResult", `"${title}" kitabı başarıyla eklendi!`, "success");
+                    
+                    document.getElementById("bookIsbn").value = "";
+                    document.getElementById("bookTitle").value = "";
+                    document.getElementById("bookAuthor").value = "";
+                    document.getElementById("bookPublisher").value = "";
+                    document.getElementById("bookYear").value = "";
+                    document.getElementById("bookTotal").value = "1";
+                    document.getElementById("bookAvailable").value = "1";
+                    
+                    // Auto-refresh search results if search is active
+                    if (document.getElementById("searchInput").value) {
+                        searchBooks();
+                    }
+                } else {
+                    showFeedback("createBookResult", result.detail || "Kitap eklenirken hata oluştu.", "error");
+                }
+            } catch (err) {
+                showFeedback("createBookResult", "İşlem sırasında sunucu bağlantı hatası oluştu.", "error");
+            }
+        }
+
+        async function borrowBook() {
+            clearFeedback("borrowResult");
+            const isbn = document.getElementById("borrowIsbn").value.trim();
+            const days = Number(document.getElementById("borrowDays").value);
+
+            if (!getToken()) {
+                showFeedback("borrowResult", "Kitap ödünç alabilmek için lütfen önce giriş yapın.", "error");
+                return;
+            }
+
+            if (!isbn) {
+                showFeedback("borrowResult", "Lütfen bir ISBN numarası belirtin.", "error");
+                return;
+            }
+
+            const data = { isbn, days };
+
+            try {
+                const res = await fetch(`${API_URL}/borrow`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    showFeedback("borrowResult", `İşlem Başarılı! İşlem ID: ${result.transaction_id}. İade için bu ID'yi kaydedin.`, "success");
+                    document.getElementById("borrowIsbn").value = "";
+                    
+                    if (result.transaction_id) {
+                        document.getElementById("returnTransactionId").value = result.transaction_id;
+                    }
+                    
+                    // Auto-refresh search
+                    searchBooks();
+                } else {
+                    showFeedback("borrowResult", result.detail || "Ödünç alma işlemi başarısız.", "error");
+                }
+            } catch (err) {
+                showFeedback("borrowResult", "Sunucu ile bağlantı kurulamadı.", "error");
+            }
+        }
+
+        async function returnBook() {
+            clearFeedback("returnResult");
+            const transactionIdVal = document.getElementById("returnTransactionId").value;
+
+            if (!getToken()) {
+                showFeedback("returnResult", "İşlem için giriş yapılması gereklidir.", "error");
+                return;
+            }
+
+            if (!transactionIdVal) {
+                showFeedback("returnResult", "Lütfen işlem ID değerini belirtin.", "error");
+                return;
+            }
+
+            const data = {
+                transaction_id: Number(transactionIdVal)
+            };
+
+            try {
+                const res = await fetch(`${API_URL}/return`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    showFeedback("returnResult", `İade Başarılı! Kitap rafa geri yerleştirildi.`, "success");
+                    document.getElementById("returnTransactionId").value = "";
+                    searchBooks();
+                } else {
+                    showFeedback("returnResult", result.detail || "İade işlemi başarısız.", "error");
+                }
+            } catch (err) {
+                showFeedback("returnResult", "Sunucu ile bağlantı kurulamadı.", "error");
+            }
+        }
+
+        async function reserveBook(isbn) {
+            if (!getToken()) {
+                alert("Kitap rezervasyonu yapabilmek için lütfen önce giriş yapın.");
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/reservations/`, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        ...authHeaders()
+                    },
+                    body: JSON.stringify({ isbn })
+                });
+
+                const result = await res.json();
+
+                if (res.ok) {
+                    alert(`Rezervasyon Başarılı! Rezervasyon ID: ${result.reservation_id}`);
+                    loadUserReservations();
+                } else {
+                    alert(result.detail || "Rezervasyon başarısız oldu.");
+                }
+            } catch (err) {
+                alert("Sunucu bağlantı hatası oluştu.");
+            }
+        }
+
+        async function loadUserReservations() {
+            const container = document.getElementById("reservationsList");
+            if (!getToken()) return;
+
+            try {
+                const res = await fetch(`${API_URL}/reservations/`, {
+                    headers: {
+                        ...authHeaders()
+                    }
+                });
+
+                if (res.ok) {
+                    const reservations = await res.json();
+                    container.innerHTML = "";
+
+                    if (reservations.length === 0) {
+                        container.innerHTML = `<p style="color:var(--text-muted); font-size:0.9rem;">Aktif rezervasyon bulunmuyor.</p>`;
+                        return;
+                    }
+
+                    reservations.forEach(resv => {
+                        const dateStr = new Date(resv.reservation_date).toLocaleDateString("tr-TR");
+                        const div = document.createElement("div");
+                        div.style.cssText = "display:flex; justify-content:space-between; align-items:center; border: 1px solid var(--border-color); padding:0.5rem 0.75rem; border-radius:var(--radius-sm); margin-bottom:0.5rem; font-size:0.85rem;";
+                        div.innerHTML = `
+                            <div>
+                                <strong>ISBN: ${resv.isbn}</strong><br>
+                                <span style="color:var(--text-muted)">Tarih: ${dateStr} - Durum: ${resv.status}</span>
+                            </div>
+                            ${resv.status === 'active' 
+                                ? `<button class="btn-danger btn-sm" style="padding:2px 8px; font-size:0.75rem" onclick="cancelReservation(${resv.reservation_id})">İptal</button>`
+                                : ''
+                            }
+                        `;
+                        container.appendChild(div);
+                    });
+                }
+            } catch (err) {
+                console.error("Rezervasyonlar yüklenirken hata oluştu:", err);
+            }
+        }
+
+        async function cancelReservation(reservationId) {
+            if (!confirm("Rezervasyonunuzu iptal etmek istediğinize emin misiniz?")) return;
+
+            try {
+                const res = await fetch(`${API_URL}/reservations/${reservationId}`, {
+                    method: "DELETE",
+                    headers: {
+                        ...authHeaders()
+                    }
+                });
+
+                if (res.ok) {
+                    alert("Rezervasyon iptal edildi.");
+                    loadUserReservations();
+                } else {
+                    const result = await res.json();
+                    alert(result.detail || "İptal işlemi başarısız.");
+                }
+            } catch (err) {
+                alert("Sunucu bağlantı hatası oluştu.");
+            }
+        }
+
+        async function getReports() {
+            try {
+                const res = await fetch(`${API_URL}/reports/`, {
+                    headers: {
+                        ...authHeaders()
+                    }
+                });
+
+                const result = await res.json();
+                document.getElementById("reportsResult").innerText = JSON.stringify(result, null, 2);
+            } catch (err) {
+                document.getElementById("reportsResult").innerText = "Rapor alınamadı. Sunucu bağlantısını kontrol edin.";
+            }
+        }
+
+        // Initialize state on load
+        window.onload = async function () {
+            await loadCurrentUser();
+        };
+    </script>
+    
+    <!-- CSS Spin Animation Utility -->
+    <style>
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
 </body>
 </html>

@@ -22,7 +22,7 @@ class User(Base):
     username = Column(String, unique=True, nullable=False)
     email = Column(String, unique=True, nullable=False)
     password_hash = Column(String, nullable=False)
-    role = Column(String, default="student")
+    role = Column(String, default="member")
 
 
 class BorrowTransaction(Base):

@@ -10,11 +10,7 @@ router = APIRouter(prefix="/auth", tags=["Auth"])
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
-    allowed_roles = ["admin", "librarian", "student"]
-
-    if user.role not in allowed_roles:
-        raise HTTPException(status_code=400, detail="Invalid role")
-
+   
     existing_username = db.query(models.User).filter(models.User.username == user.username).first()
 
     if existing_username:
@@ -29,7 +25,7 @@ def register(user: schemas.UserCreate, db: Session = Depends(get_db)):
         username=user.username,
         email=user.email,
         password_hash=get_password_hash(user.password),
-        role=user.role
+        role="member"
     )
 
     db.add(new_user)
